@@ -105,7 +105,7 @@ def set_up_game(words):
 
     correct_count = test_words(words, rounds)
     if not correct_count:
-        return
+        correct_count = 0
 
     print 'game over!'
     print 'you got', correct_count, 'right, and', rounds - correct_count, 'wrong'
@@ -280,7 +280,7 @@ def get_flash_cards_data_set_names():
         'j: stressed pronouns',
         'k: possessive adjectives',
         'l: possessive pronouns',
-        'm: imparfait/passé composé exercise I'
+        'm: imparfait/passé composé exercise I',
         'n: imparfait/passé composé exercise II'
     ]
 
