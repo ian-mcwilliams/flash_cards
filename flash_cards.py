@@ -119,13 +119,15 @@ def set_up_game(words):
 
 def print_rules():
     print ''
-    print 'for a and e, follow with \\ or / to show the grave or accent (à, á, è, é)'
+    print 'for a, e, i, o and u, follow with / to show the accent (á, é, í, ó, ú)'
+    print 'for a and e, follow with \\ to show the grave (à, è)'
     print 'for a, e, i, o and u, follow with ^ to show the circumflex (â, ê, î, ô, û)'
     print 'for c, follow with ? to show the cedille (ç)'
     print 'for i, follow with : for the trema (ï)'
     print 'for o, follow with £ for the ligature of o and e (œ)'
     print ''
-    print 'if multiple cases apply they will all be shown, but either is considered a correct answer!'
+    print 'if multiple cases apply they will all be shown separately or with options in parentheses separated by'
+    print 'pipes (eg "(he|she|it) (was speaking|used to speak)"), but either/any combination is considered correct!'
 
 
 def test_words(all_words, rounds):
@@ -174,7 +176,7 @@ def stringify_word(input_var):
 
 
 def check_response(response, translation):
-    if response in translation:
+    if response in unpack_translation(translation):
         return True
     else:
         return False
@@ -199,7 +201,7 @@ def unpack_translation(translation):
 
 
 def unpack_translations(translation):
-    regex_optionals_string = r'\(((?:[^\)]+\|)+[^\)])+\)'
+    regex_optionals_string = r'\(((?:[^\)]+\|)+[^\)]+)\)'
     optionals_count = len(re.findall(regex_optionals_string, translation))
     if optionals_count == 0:
         return [translation]
@@ -292,17 +294,23 @@ def get_diacritic(letter, next_letter):
         elif next_letter == '^':
             return 'ê'
     elif letter == 'i':
-        if next_letter == '^':
+        if next_letter == '/':
+            return 'í'
+        elif next_letter == '^':
             return 'î'
-        if next_letter == ':':
+        elif next_letter == ':':
             return 'ï'
     elif letter == 'o':
-        if next_letter == '£':
+        if next_letter == '/':
+            return 'ó'
+        elif next_letter == '£':
             return 'œ'
         elif next_letter == '^':
             return 'ô'
     elif letter == 'u':
-        if next_letter == '^':
+        if next_letter == '/':
+            return 'ú'
+        elif next_letter == '^':
             return 'û'
     return letter
 
@@ -701,7 +709,7 @@ def spanish_verbs_imperfect_conjugations():
         ('(he|she|it) (was speaking|used to speak)',    'hablaba [3]'),
         ('we (were speaking|used to speak)',            'hablábamos'),
         ('you all (were speaking|used to speak)',       'hablabais'),
-        ('they (were speaking|they used to speak)',     'hablaban'),
+        ('they (were speaking|used to speak)',          'hablaban'),
         ('I (was eating|used to eat)',                  'comía [1]'),
         ('you (were eating|used to eat)',               'comías'),
         ('(he|she|it) (was eating|used to eat)',        'comía [3]'),
@@ -710,7 +718,7 @@ def spanish_verbs_imperfect_conjugations():
         ('they (were eating|used to eat)',              'comían'),
         ('I (was living|used to live)',                 'vivía [1]'),
         ('you (were living|used to live)',              'vivías'),
-        ('(he|she|it) was living|used to live)',        'vivía [3]'),
+        ('(he|she|it) (was living|used to live)',       'vivía [3]'),
         ('we (were living|used to live)',               'vivíamos'),
         ('you all (were living|used to live)',          'vivíais'),
         ('they (were living|used to live)',             'vivían'),
@@ -785,9 +793,5 @@ def spanish_verbs_future_conditional_conjugations():
         ('they would live',         'vivirían')
     ])
 
-
-
-# for (k, v) in get_flash_cards_data()['o'].items():
-#     print k, '...', v
 
 flash_cards()
