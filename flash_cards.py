@@ -174,7 +174,7 @@ def stringify_word(input_var):
 
 
 def check_response(response, translation):
-    if response == translation or type(translation) == tuple and response in translation:
+    if response in translation:
         return True
     else:
         return False
@@ -188,6 +188,57 @@ def filter_translation(translation):
         return tuple(filtered_translation)
     else:
         return execute_filter(translation)
+
+
+def unpack_translation(translation):
+    translation_array = [translation] if isinstance(translation, basestring) else translation
+    all_translations = []
+    for index in xrange(len(translation_array)):
+        all_translations += unpack_translations(translation_array[index])
+    return all_translations
+
+
+def unpack_translations(translation):
+    regex_optionals_string = r'\(((?:[^\)]+\|)+[^\)])+\)'
+    optionals_count = len(re.findall(regex_optionals_string, translation))
+    if optionals_count == 0:
+        return [translation]
+    full_regex_string = (r'([^\(]*)' + regex_optionals_string) * optionals_count + r'([^\(]*)'
+    matches = re.match(full_regex_string, translation)
+    unpacked_optionals = unpack_optionals(matches.groups(), optionals_count)
+    for unpacked_optional_index in xrange(len(unpacked_optionals)):
+        unpacked_optionals[unpacked_optional_index] = ''.join(unpacked_optionals[unpacked_optional_index])
+    return unpacked_optionals
+
+
+def unpack_optionals(matches, optionals_count):
+    unpacked_list = []
+    current_list = list(matches)
+    for optional_index in xrange(optionals_count):
+        if unpacked_list:
+            list_optional_index = optional_index * 2 + 1
+            current_unpacked_list = unpacked_list
+            unpacked_list = []
+            for unpacked_list_index in xrange(len(current_unpacked_list)):
+                current_list[list_optional_index - 2] = current_unpacked_list[unpacked_list_index][list_optional_index - 2]
+                unpacked_list += unpack_optional(current_list, list_optional_index)
+        else:
+            unpacked_list += unpack_optional(current_list, 1)
+    return unpacked_list
+
+
+def unpack_optional(current_strings, optional_index):
+    unpacked_list = []
+    options = current_strings[optional_index].split('|')
+    for option_index in xrange(len(options)):
+        current_list = []
+        for list_index in xrange(len(current_strings)):
+            if list_index == optional_index:
+                current_list.append(options[option_index])
+            else:
+                current_list.append(current_strings[list_index])
+        unpacked_list.append(current_list)
+    return unpacked_list
 
 
 def execute_filter(translation):
@@ -281,7 +332,8 @@ def get_flash_cards_data_set_names():
         'k: possessive adjectives',
         'l: possessive pronouns',
         'm: imparfait/passé composé exercise I',
-        'n: imparfait/passé composé exercise II'
+        'n: imparfait/passé composé exercise II',
+        'o: SPANISH: simple verb conjugation'
     ]
 
 
@@ -607,7 +659,135 @@ def get_flash_cards_data():
             ('to be interested in',                     's\'intéresser à'),
             (('to train', 'to practise'),               's\'entraîner'),
             ('to relax',                                'se détendre'),
-        ]))])
+        ])), ('o', spanish_verb_simple_conjugations())])
 
+
+def spanish_verb_simple_conjugations():
+    conjugation_dict = spanish_verbs_preterite_conjugations()
+    conjugation_dict.update(spanish_verbs_imperfect_conjugations())
+    conjugation_dict.update(spanish_verbs_present_conjugations())
+    conjugation_dict.update(spanish_verbs_future_simple_conjugations())
+    conjugation_dict.update(spanish_verbs_future_conditional_conjugations())
+    return conjugation_dict
+
+
+def spanish_verbs_preterite_conjugations():
+    return ordic([
+        ('I spoke',             'hablé'),
+        ('you spoke',           'hablaste'),
+        ('(he|she|it) spoke',   'habló'),
+        ('we spoke',            'hablamos'),
+        ('you all spoke',       'hablasteis'),
+        ('they spoke',          'hablaron'),
+        ('I ate',               'comí'),
+        ('you ate',             'comiste'),
+        ('(he|she|it) ate',     'comió'),
+        ('we ate',              'comimos'),
+        ('you all ate',         'comisteis'),
+        ('they ate',            'comieron'),
+        ('I lived',             'viví'),
+        ('you lived',           'viviste'),
+        ('(he|she|it) lived',   'vivió'),
+        ('we lived',            'vivimos [preterite]'),
+        ('you all lived',       'vivisteis'),
+        ('they lived',          'vivieron')
+    ])
+
+
+def spanish_verbs_imperfect_conjugations():
+    return ordic([
+        ('I (was speaking|used to speak)',              'hablaba [1]'),
+        ('you (were speaking|used to speak)',           'hablabas'),
+        ('(he|she|it) (was speaking|used to speak)',    'hablaba [3]'),
+        ('we (were speaking|used to speak)',            'hablábamos'),
+        ('you all (were speaking|used to speak)',       'hablabais'),
+        ('they (were speaking|they used to speak)',     'hablaban'),
+        ('I (was eating|used to eat)',                  'comía [1]'),
+        ('you (were eating|used to eat)',               'comías'),
+        ('(he|she|it) (was eating|used to eat)',        'comía [3]'),
+        ('we (were eating|used to eat)',                'comíamos'),
+        ('you all (were eating|used to eat)',           'comíais'),
+        ('they (were eating|used to eat)',              'comían'),
+        ('I (was living|used to live)',                 'vivía [1]'),
+        ('you (were living|used to live)',              'vivías'),
+        ('(he|she|it) was living|used to live)',        'vivía [3]'),
+        ('we (were living|used to live)',               'vivíamos'),
+        ('you all (were living|used to live)',          'vivíais'),
+        ('they (were living|used to live)',             'vivían'),
+    ])
+
+
+def spanish_verbs_present_conjugations():
+    return ordic([
+        ('I speak',             'hablo'),
+        ('you speak',           'hablas'),
+        ('(he|she|it) speaks',  'habla'),
+        ('we speak',            'hablamos'),
+        ('you all speak',       'habláis'),
+        ('they speak',          'hablan'),
+        ('I eat',               'como'),
+        ('you eat',             'comes'),
+        ('(he|she|it) eats',    'come'),
+        ('we eat',              'comimos'),
+        ('you all eat',         'coméis'),
+        ('they eat',            'comen'),
+        ('I live',              'vivo'),
+        ('you live',            'vives'),
+        ('(he|she|it) lives',   'vive'),
+        ('we live',             'vivimos [present]'),
+        ('you all live',        'vivís'),
+        ('they live',           'viven')
+    ])
+
+
+def spanish_verbs_future_simple_conjugations():
+    return ordic([
+        ('I will speak',            'hablaré'),
+        ('you will speak',          'hablarás'),
+        ('h(he|she|it) will speak', 'hablará'),
+        ('we will speak',           'hablaremos'),
+        ('you all will speak',      'hablaréis'),
+        ('they will speak',         'hablarán'),
+        ('I will eat',              'comeré'),
+        ('you will eat',            'comerás'),
+        ('(he|she|it) will eat',    'comerá'),
+        ('we will eat',             'comeremos'),
+        ('you all will eat',        'comeréis'),
+        ('they will eat',           'comerán'),
+        ('I will live',             'viviré'),
+        ('you will live',           'vivirás'),
+        ('(he|she|it) will live',   'vivirá'),
+        ('we will live',            'viviremos'),
+        ('you all will live',       'viviréis'),
+        ('they will live',          'vivirán')
+    ])
+
+
+def spanish_verbs_future_conditional_conjugations():
+    return ordic([
+        ('I would speak',           'hablaría [1]'),
+        ('you would speak',         'hablarías'),
+        ('(he|she|it) would speak', 'hablaría [3]'),
+        ('we would speak',          'hablaríamos'),
+        ('you all would speak',     'hablaríais'),
+        ('they would speak',        'hablarían'),
+        ('I would eat',             'comería [1]'),
+        ('you would eat',           'comerías'),
+        ('(he|she|it) would eat',   'comería [3]'),
+        ('we would eat',            'comeríamos'),
+        ('you all would eat',       'comeríais'),
+        ('they would eat',          'comerían'),
+        ('I would live',            'viviría [1]'),
+        ('you would live',          'vivirías'),
+        ('(he|she|it) would live',  'viviría [3]'),
+        ('we would live',           'viviríamos'),
+        ('you all would live',      'viviríais'),
+        ('they would live',         'vivirían')
+    ])
+
+
+
+# for (k, v) in get_flash_cards_data()['o'].items():
+#     print k, '...', v
 
 flash_cards()
